@@ -1,0 +1,11 @@
+id,name,age,department,salary,experience_years
+1,Alice,28,Engineering,85000,4
+2,Bob,35,Sales,62000,8
+3,Charlie,,Engineering,95000,10
+4,David,42,HR,58000,15
+5,Eva,30,Marketing,,5
+6,Frank,25,Engineering,72000,2
+7,Grace,38,Sales,68000,
+8,Helen,29,Marketing,60000,4
+9,Ian,,HR,55000,7
+10,Jane,45,Engineering,105000,20
