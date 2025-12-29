@@ -162,3 +162,22 @@ services enable	Unlock control-plane APIs
 app create	Bind project to App Engine
 app deploy	Build + ship + run
 app browse	Discover live endpoint
+
+
+
+Other Commands:
+gcloud app versions list
+gcloud app versions delete <version>
+gcloud app services list
+gcloud app instances list
+
+gcloud app logs tail -s default
+
+
+Task	            Command / UI
+Monitor	        App Engine → Dashboard
+View logs	    Logs Explorer
+Stop app	    gcloud app versions stop [VERSION_ID] --service=default
+Redeploy	    gcloud app deploy
+View versions	gcloud app versions list
+Delete version	gcloud app versions delete [VERSION_ID] --service=default
