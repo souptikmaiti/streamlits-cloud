@@ -1,0 +1,164 @@
+1️⃣ What is the role of app.yaml?
+    The contract between your code and Google App Engine
+    It tells App Engine how to run your app, not what your app does.
+
+    runtime: custom
+    env: flex
+
+    App Engine decides:
+        ❌ “I can’t use a prebuilt Python runtime”
+        ✅ “I must build and run a Docker container”
+    Routes deployment to App Engine Flexible infrastructure
+    Uses Compute Engine VMs instead of sandbox
+
+    automatic_scaling:
+        min_num_instances: 1
+        max_num_instances: 1
+    
+    App Engine creates Managed Instance Groups
+    Controls VM lifecycle:
+        When to start
+        When to stop
+        How many replicas
+
+    resources:
+        cpu: 1
+        memory_gb: 1
+        disk_size_gb: 10
+
+    App Engine allocates resources for each VM
+    Billing is based on actual resource usage
+    Not on max configured resources
+    Translates to:
+        Compute Engine machine type
+        Disk allocation
+        Prevents over-allocation → cost control
+    
+    app.yaml is NOT application config
+    It is infrastructure orchestration config
+
+2️⃣ Why are these services enabled?
+gcloud services enable \
+  appengine.googleapis.com \
+  cloudbuild.googleapis.com \
+  artifactregistry.googleapis.com
+
+This is service activation in GCP’s control plane.
+
+a) appengine.googleapis.com
+What it enables
+    App Engine API
+    Service orchestration
+    Traffic routing
+    Version management
+Without it:
+    ERROR: App Engine API is not enabled
+
+b) cloudbuild.googleapis.com
+What it does
+    Runs Docker builds remotely
+    Executes your Dockerfile
+    Produces container images
+
+    gcloud app deploy
+        ↓
+    Cloud Build
+        ↓
+    Docker image built
+Without it:
+    ERROR: Cloud Build API has not been used
+
+c) artifactregistry.googleapis.com
+What it does
+    Stores built Docker images
+    Replaces older GCR behavior
+    Acts as a private container registry
+    Cloud Build
+        ↓
+    Push image to Artifact Registry
+
+Why all three are required together
+
+    App Engine does not build images itself
+    It delegates:
+        Task	        Service
+        Build	    Cloud Build
+        Store image	Artifact Registry
+        Run container	App Engine
+
+
+
+3️⃣ gcloud app create (asia-south1)
+
+    This is a one-time project-level operation.
+    GCP does:
+        Reserves an App Engine application
+        Ties your project to App Engine forever
+
+    Locks the region
+        App Engine apps cannot change regions
+    Creates hidden resources
+        App Engine service account
+        Default service config
+        Routing infrastructure
+
+    Why region matters
+        Determines:
+            VM location
+            Network latency
+            Legal/data residency
+
+4️⃣ gcloud app deploy
+This is the most complex command.
+    Step 1: Source upload
+    Your local files
+        → zipped
+        → uploaded to GCP
+    Step 2: Build phase (Cloud Build)
+    Dockerfile
+        → Docker image built
+        → Python dependencies installed
+    Step 3: Image storage
+        Docker image → pushed to Artifact Registry
+    Step 4: App Engine deployment
+        Artifact Registry image → App Engine service → Managed VM instance
+    Step 5: Traffic routing
+        App Engine:
+            Creates a new version
+            Routes traffic to it
+            Keeps old versions (rollback possible)
+
+Visual mental model
+Local machine
+   ↓
+Cloud Build
+   ↓
+Artifact Registry
+   ↓
+App Engine Flex
+   ↓
+Compute Engine VM
+
+5️⃣ gcloud app browse
+What it does
+    Queries App Engine API
+
+    Fetches:
+        Default service URL
+        Current live version
+    Opens browser to:
+        https://<project-id>.uc.r.appspot.com
+    That URL is:
+        Load-balanced
+        TLS-terminated
+        Version-aware
+        Auto-scaled
+    All managed by App Engine.
+
+6️⃣ Mental map
+Command	Purpose
+app.yaml	Infrastructure contract
+services enable	Unlock control-plane APIs
+app create	Bind project to App Engine
+app deploy	Build + ship + run
+app browse	Discover live endpoint
